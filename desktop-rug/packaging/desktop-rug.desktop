@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Desktop Rug
+Name[fa]=فرش دسکتاپ
+Comment=Sweep your desktop mess under a Persian rug
+Comment[fa]=شلوغی دسکتاپ را زیر فرش جارو کنید
+Exec=desktop-rug
+Icon=desktop-rug
+Categories=Utility;
+Terminal=false

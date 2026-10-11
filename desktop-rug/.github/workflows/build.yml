@@ -1,0 +1,69 @@
+name: build
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements-windows.txt pyinstaller
+      - name: Compile cloth solver (MinGW gcc preinstalled on windows-latest)
+        shell: pwsh
+        run: gcc -O3 -ffast-math -fno-finite-math-only -shared -static-libgcc -o desktop_rug/native/clothsim.dll desktop_rug/native/clothsim.c
+      - name: Unit tests
+        run: python -m unittest discover -s tests
+      - name: Build exe
+        run: pyinstaller --noconfirm --clean --distpath dist/windows --workpath build/windows packaging/desktop-rug.spec
+      - name: Smoke test (off-screen render)
+        shell: pwsh
+        run: |
+          # no GPU on the runner: OpenGL comes from the bundled opengl32sw.dll, else the software renderer
+          $p = Start-Process dist/windows/DesktopRug.exe -ArgumentList '--render-preview','preview.png','--preview-scenario','corner' -Wait -PassThru
+          if (!(Test-Path preview.png)) { throw "exe did not render" }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DesktopRug-windows
+          path: |
+            dist/windows/DesktopRug.exe
+            preview.png
+
+  linux:
+    # oldest supported runner -> binary runs on glibc >= 2.35 distros
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: System libraries (Qt xcb + AppImage tooling)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-x11-0 libxcb-cursor0 libxcb-icccm4 libxcb-keysyms1 \
+            libxcb-xkb1 libxcb-render-util0 libxcb-image0 libxcb-randr0 libxcb-shape0 libegl1 \
+            libfuse2 file xvfb libgl1-mesa-dri gcc
+      - name: Build
+        run: PYTHON=python ./build_linux.sh
+      - name: Unit tests + off-screen smoke test
+        run: |
+          .venv/bin/python -m unittest discover -s tests
+          xvfb-run -a -s "-screen 0 1280x800x24 +extension GLX" dist/linux/desktop-rug --render-preview preview.png --preview-scenario corner
+          test -s preview.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DesktopRug-linux
+          path: |
+            dist/linux/desktop-rug
+            dist/linux/DesktopRug-x86_64.AppImage
+            preview.png

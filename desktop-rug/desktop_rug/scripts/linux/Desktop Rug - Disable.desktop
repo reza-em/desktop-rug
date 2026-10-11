@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Desktop Rug - Disable
+Name[fa]=غیرفعال‌سازی فرش دسکتاپ
+Comment=Close Desktop Rug and stop it starting at login
+Exec=sh -c 'for d in "$(dirname "$1")" "$PWD" "$HOME/.local/share/desktop-rug"; do [ -f "$d/disable-desktop-rug.sh" ] && exec sh "$d/disable-desktop-rug.sh"; done; f=$(find "$HOME" -maxdepth 4 -name disable-desktop-rug.sh 2>/dev/null | head -n 1); [ -n "$f" ] && exec sh "$f"; notify-send "Desktop Rug" "disable-desktop-rug.sh not found"' sh %k
+Icon=preferences-desktop-wallpaper
+Terminal=false

@@ -1,0 +1,5 @@
+# Qt >= 6.10 on Windows links against the OS ICU (icuuc.dll). That is present on
+# Windows 10 1903+/11 but missing under Wine, so the cross-built (and CI) .exe is
+# pinned to 6.9.x, which supports Windows 10 1809+ and Windows 11.
+PySide6-Essentials==6.9.3
+numpy==1.26.4   # numpy 2.x Windows wheels call ucrtbase crealf, missing in Wine 10
